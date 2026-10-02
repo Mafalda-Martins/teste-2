@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Corporate Survivor</title>
+<meta charset="UTF-8">
+<title>👩‍💼 Corporate Survivor</title>
 
 <style>
+
 body{
     margin:0;
+    background:linear-gradient(to bottom,#87CEEB,#EAF7FF);
     overflow:hidden;
-    background:#eaf4ff;
-    font-family:Arial;
+    font-family:Arial,sans-serif;
     text-align:center;
 }
 
@@ -16,43 +18,56 @@ h1{
     margin-top:10px;
 }
 
+#score{
+    font-size:28px;
+    font-weight:bold;
+}
+
 #game{
     width:1000px;
-    height:350px;
+    height:400px;
     margin:auto;
-    position:relative;
     border-bottom:5px solid #333;
+    position:relative;
     overflow:hidden;
 }
 
 #player{
     position:absolute;
-    bottom:0;
     left:80px;
-    font-size:60px;
+    bottom:0;
+    font-size:70px;
 }
 
 .jump{
-    animation:jump 0.6s;
+    animation:jump 0.7s;
 }
 
 @keyframes jump{
     0%{bottom:0;}
-    50%{bottom:170px;}
+    50%{bottom:180px;}
     100%{bottom:0;}
 }
 
 .obstacle{
     position:absolute;
+    right:-80px;
     bottom:0;
-    right:-100px;
-    font-size:55px;
+    font-size:60px;
 }
 
-#score{
-    font-size:24px;
-    font-weight:bold;
+.cloud{
+    position:absolute;
+    top:30px;
+    font-size:50px;
+    animation:cloudMove 20s linear infinite;
 }
+
+@keyframes cloudMove{
+    from{left:100%;}
+    to{left:-200px;}
+}
+
 </style>
 
 </head>
@@ -62,21 +77,24 @@ h1{
 <h1>👩‍💼 Corporate Survivor</h1>
 
 <p>
-Salta reuniões 📅, bugs 🐞 e deadlines ⏰.
-Apanha cafés ☕ na vida real.
+Salta reuniões 📅, emails 📧, bugs 🐞 e urgências 🔥!
 </p>
 
-<div id="score">Score: 0</div>
+<div id="score">Pontuação: 0</div>
 
 <div id="game">
+
+    <div class="cloud">☁️</div>
+
     <div id="player">👩‍💼</div>
+
 </div>
 
 <script>
 
 const player = document.getElementById("player");
 const game = document.getElementById("game");
-const scoreLabel = document.getElementById("score");
+const scoreBox = document.getElementById("score");
 
 let score = 0;
 let gameOver = false;
@@ -89,7 +107,7 @@ document.addEventListener("keydown",(e)=>{
 
         setTimeout(()=>{
             player.classList.remove("jump");
-        },600);
+        },700);
     }
 });
 
@@ -97,55 +115,27 @@ function createObstacle(){
 
     if(gameOver) return;
 
-    const items=["📅","🐞","⏰","📧"];
+    const icons=["📅","📧","🐞","🔥"];
 
     const obstacle=document.createElement("div");
     obstacle.classList.add("obstacle");
+
     obstacle.innerHTML=
-        items[Math.floor(Math.random()*items.length)];
+        icons[Math.floor(Math.random()*icons.length)];
 
     game.appendChild(obstacle);
 
-    let position=-100;
+    let position=-80;
 
     const move=setInterval(()=>{
 
-        position+=7;
+        position+=8;
 
         obstacle.style.right=position+"px";
 
-        const playerBottom=
-            parseInt(
-                window.getComputedStyle(player)
-                .getPropertyValue("bottom")
-            );
+        let heroBottom=parseInt(
+            window.getComputedStyle(player)
+            .getPropertyValue("bottom")
+        );
 
-        if(position>820 && position<900 && playerBottom<50){
-
-            alert(
-                "💥 Foste apanhada por uma reunião inesperada!\n\n" +
-                "Pontuação: "+score
-            );
-
-            gameOver=true;
-            location.reload();
-        }
-
-        if(position>1100){
-
-            score++;
-            scoreLabel.innerHTML="Score: "+score;
-
-            obstacle.remove();
-            clearInterval(move);
-        }
-
-    },20);
-}
-
-setInterval(createObstacle,1800);
-
-</script>
-
-</body>
-</html>
+        if(position>820 && position<900 && heroBottom<50
