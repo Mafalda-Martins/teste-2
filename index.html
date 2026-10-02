@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Corporate Survivor</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:#eaf4ff;
+    font-family:Arial;
+    text-align:center;
+}
+
+h1{
+    margin-top:10px;
+}
+
+#game{
+    width:1000px;
+    height:350px;
+    margin:auto;
+    position:relative;
+    border-bottom:5px solid #333;
+    overflow:hidden;
+}
+
+#player{
+    position:absolute;
+    bottom:0;
+    left:80px;
+    font-size:60px;
+}
+
+.jump{
+    animation:jump 0.6s;
+}
+
+@keyframes jump{
+    0%{bottom:0;}
+    50%{bottom:170px;}
+    100%{bottom:0;}
+}
+
+.obstacle{
+    position:absolute;
+    bottom:0;
+    right:-100px;
+    font-size:55px;
+}
+
+#score{
+    font-size:24px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>👩‍💼 Corporate Survivor</h1>
+
+<p>
+Salta reuniões 📅, bugs 🐞 e deadlines ⏰.
+Apanha cafés ☕ na vida real.
+</p>
+
+<div id="score">Score: 0</div>
+
+<div id="game">
+    <div id="player">👩‍💼</div>
+</div>
+
+<script>
+
+const player = document.getElementById("player");
+const game = document.getElementById("game");
+const scoreLabel = document.getElementById("score");
+
+let score = 0;
+let gameOver = false;
+
+document.addEventListener("keydown",(e)=>{
+
+    if(e.code==="Space" && !player.classList.contains("jump")){
+
+        player.classList.add("jump");
+
+        setTimeout(()=>{
+            player.classList.remove("jump");
+        },600);
+    }
+});
+
+function createObstacle(){
+
+    if(gameOver) return;
+
+    const items=["📅","🐞","⏰","📧"];
+
+    const obstacle=document.createElement("div");
+    obstacle.classList.add("obstacle");
+    obstacle.innerHTML=
+        items[Math.floor(Math.random()*items.length)];
+
+    game.appendChild(obstacle);
+
+    let position=-100;
+
+    const move=setInterval(()=>{
+
+        position+=7;
+
+        obstacle.style.right=position+"px";
+
+        const playerBottom=
+            parseInt(
+                window.getComputedStyle(player)
+                .getPropertyValue("bottom")
+            );
+
+        if(position>820 && position<900 && playerBottom<50){
+
+            alert(
+                "💥 Foste apanhada por uma reunião inesperada!\n\n" +
+                "Pontuação: "+score
+            );
+
+            gameOver=true;
+            location.reload();
+        }
+
+        if(position>1100){
+
+            score++;
+            scoreLabel.innerHTML="Score: "+score;
+
+            obstacle.remove();
+            clearInterval(move);
+        }
+
+    },20);
+}
+
+setInterval(createObstacle,1800);
+
+</script>
+
+</body>
+</html>
