@@ -1,156 +1,832 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt">
 <head>
-<meta charset="UTF-8">
-<title>☕ Coffee Run</title>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<style>
-body{
-    margin:0;
-    overflow:hidden;
-    font-family:Arial;
-    text-align:center;
-    background:linear-gradient(#87CEEB,#dff4ff);
-}
+    <title>Escape From Monday</title>
 
-h1{
-    margin:10px 0;
-}
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-#score{
-    font-size:28px;
-    font-weight:bold;
-}
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at top, #334ea8, #10152f 65%);
+            color: white;
+        }
 
-#game{
-    width:1000px;
-    height:400px;
-    margin:auto;
-    position:relative;
-    overflow:hidden;
-    border-bottom:5px solid #333;
-}
+        #container {
+            width: min(1100px, 96vw);
+            text-align: center;
+        }
 
-#player{
-    position:absolute;
-    left:80px;
-    bottom:0;
-    font-size:70px;
-}
+        h1 {
+            margin: 0 0 5px;
+            font-size: clamp(30px, 5vw, 56px);
+            text-shadow: 0 5px 20px rgba(0, 0, 0, 0.45);
+        }
 
-.jump{
-    animation:jump 0.7s linear;
-}
+        #subtitle {
+            margin: 0 0 14px;
+            color: #dce5ff;
+        }
 
-@keyframes jump{
-    0%{bottom:0;}
-    50%{bottom:180px;}
-    100%{bottom:0;}
-}
+        #hud {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
 
-.item{
-    position:absolute;
-    right:-100px;
-    bottom:0;
-    font-size:60px;
-}
-</style>
+        .hud-card {
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 14px;
+            background: rgba(10, 15, 40, 0.72);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.22);
+            backdrop-filter: blur(8px);
+            font-weight: bold;
+        }
+
+        #game-wrapper {
+            position: relative;
+            overflow: hidden;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 22px;
+            background: #90ddff;
+            box-shadow: 0 20px 65px rgba(0, 0, 0, 0.45);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            touch-action: manipulation;
+        }
+
+        #overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(7, 10, 28, 0.48);
+            backdrop-filter: blur(3px);
+        }
+
+        #overlay.hidden {
+            display: none;
+        }
+
+        #menu {
+            width: min(520px, 92%);
+            padding: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 22px;
+            background: rgba(18, 24, 60, 0.94);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.45);
+        }
+
+        #menu h2 {
+            margin-top: 0;
+            font-size: 32px;
+            color: #ffdd67;
+        }
+
+        #menu p {
+            line-height: 1.5;
+            color: #e8edff;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px 22px;
+            border: 0;
+            border-radius: 14px;
+            color: #17132b;
+            font-weight: 900;
+            font-size: 18px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #ffdd67, #ff9e45);
+            box-shadow: 0 8px 22px rgba(255, 158, 69, 0.28);
+            transition: transform 0.15s, filter 0.15s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #mobile-jump {
+            margin-top: 12px;
+            color: white;
+            background: linear-gradient(135deg, #675cff, #ad4cff);
+        }
+
+        #message {
+            min-height: 26px;
+            margin-top: 10px;
+            color: #ffdf73;
+            font-weight: bold;
+        }
+
+        @media (max-width: 700px) {
+            #hud {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hud-card {
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            #subtitle {
+                font-size: 14px;
+            }
+
+            #menu {
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
 
 <body>
+    <main id="container">
+        <h1>🏃‍♀️ Escape From Monday</h1>
 
-<h1>☕ Coffee Run</h1>
-<p>Apanha cafés ☕ e evita reuniões 📅</p>
+        <p id="subtitle">
+            Apanha cafés, evita reuniões e sobrevive ao caos corporativo.
+        </p>
 
-<div id="score">Pontos: 0</div>
+        <section id="hud">
+            <div class="hud-card">
+                🏆 Pontos:
+                <span id="score">0</span>
+            </div>
 
-<div id="game">
-    <div id="player">🏃‍♀️</div>
-</div>
+            <div class="hud-card">
+                ❤️ Vidas:
+                <span id="lives">3</span>
+            </div>
 
-<script>
+            <div class="hud-card">
+                ⚡ Nível:
+                <span id="level">1</span>
+            </div>
 
-const player = document.getElementById("player");
-const game = document.getElementById("game");
-const scoreBox = document.getElementById("score");
+            <div class="hud-card">
+                👑 Recorde:
+                <span id="high-score">0</span>
+            </div>
+        </section>
 
-let score = 0;
+        <section id="game-wrapper">
+            <canvas id="game" width="1100" height="520"></canvas>
 
-document.addEventListener("keydown", (e)=>{
+            <div id="overlay">
+                <div id="menu">
+                    <h2 id="menu-title">Pronta para sobreviver?</h2>
 
-    if(e.code==="Space"){
+                    <p id="menu-text">
+                        Salta reuniões 📅, emails 📧, bugs 🐞 e
+                        urgências 🔥. Apanha café ☕ para ganhar
+                        pontos extra.
+                    </p>
 
-        if(!player.classList.contains("jump")){
+                    <p>
+                        <strong>Computador:</strong> Espaço ou seta para cima<br>
+                        <strong>Telemóvel:</strong> toca no jogo
+                    </p>
 
-            player.classList.add("jump");
+                    <button id="start-button">
+                        ▶️ Começar
+                    </button>
+                </div>
+            </div>
+        </section>
 
-            setTimeout(()=>{
-                player.classList.remove("jump");
-            },700);
+        <button id="mobile-jump">
+            ⬆️ SALTAR
+        </button>
+
+        <div id="message"></div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+
+        const overlay = document.getElementById("overlay");
+        const startButton = document.getElementById("start-button");
+        const menuTitle = document.getElementById("menu-title");
+        const menuText = document.getElementById("menu-text");
+
+        const scoreText = document.getElementById("score");
+        const livesText = document.getElementById("lives");
+        const levelText = document.getElementById("level");
+        const highScoreText = document.getElementById("high-score");
+        const messageText = document.getElementById("message");
+        const mobileJump = document.getElementById("mobile-jump");
+
+        const groundY = 430;
+
+        let gameRunning = false;
+        let animationId = null;
+        let lastTime = 0;
+        let spawnTimer = 0;
+        let coffeeTimer = 0;
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let speed = 7;
+        let invincibleTimer = 0;
+        let shakeTimer = 0;
+
+        let highScore = Number(
+            localStorage.getItem("escapeMondayHighScore") || 0
+        );
+
+        highScoreText.textContent = highScore;
+
+        const player = {
+            x: 115,
+            y: groundY - 74,
+            width: 62,
+            height: 74,
+            velocityY: 0,
+            gravity: 0.85,
+            jumpPower: -16.5,
+            onGround: true
+        };
+
+        const obstacles = [];
+        const coffees = [];
+        const particles = [];
+        const clouds = [
+            { x: 100, y: 75, speed: 0.25, size: 45 },
+            { x: 480, y: 115, speed: 0.18, size: 62 },
+            { x: 850, y: 60, speed: 0.3, size: 48 }
+        ];
+
+        const skyline = [];
+
+        for (let i = 0; i < 15; i++) {
+            skyline.push({
+                x: i * 90,
+                width: 55 + Math.random() * 50,
+                height: 80 + Math.random() * 130
+            });
         }
-    }
-});
 
-function spawn(){
+        function resetGame() {
+            score = 0;
+            lives = 3;
+            level = 1;
+            speed = 7;
+            spawnTimer = 0;
+            coffeeTimer = 0;
+            invincibleTimer = 0;
+            shakeTimer = 0;
 
-    let obj=document.createElement("div");
+            obstacles.length = 0;
+            coffees.length = 0;
+            particles.length = 0;
 
-    obj.classList.add("item");
+            player.x = 115;
+            player.y = groundY - player.height;
+            player.velocityY = 0;
+            player.onGround = true;
 
-    let isCoffee=Math.random()>0.5;
+            updateHud();
+        }
 
-    obj.innerHTML=isCoffee ? "☕" : "📅";
+        function startGame() {
+            resetGame();
+            overlay.classList.add("hidden");
+            messageText.textContent = "Sobrevive ao primeiro dia! 💼";
+            gameRunning = true;
+            lastTime = performance.now();
 
-    game.appendChild(obj);
+            cancelAnimationFrame(animationId);
+            animationId = requestAnimationFrame(gameLoop);
+        }
 
-    let pos=-100;
+        function jump() {
+            if (!gameRunning) {
+                return;
+            }
 
-    let move=setInterval(()=>{
-
-        pos+=12;
-
-        obj.style.right=pos+"px";
-
-        let playerHeight=
-            parseInt(getComputedStyle(player).bottom);
-
-        if(pos>820 && pos<900){
-
-            if(playerHeight<50){
-
-                if(isCoffee){
-
-                    score+=5;
-
-                }else{
-
-                    alert(
-                        "📅 Foste para mais uma reunião!\n\nPontos: "+score
-                    );
-
-                    location.reload();
-                }
-
-                scoreBox.innerHTML="Pontos: "+score;
-
-                obj.remove();
-
-                clearInterval(move);
+            if (player.onGround) {
+                player.velocityY = player.jumpPower;
+                player.onGround = false;
+                createParticles(
+                    player.x + player.width / 2,
+                    groundY,
+                    "#ffffff",
+                    7
+                );
             }
         }
 
-        if(pos>1200){
+        function createObstacle() {
+            const types = [
+                {
+                    emoji: "📅",
+                    name: "Reunião surpresa",
+                    width: 58,
+                    height: 62
+                },
+                {
+                    emoji: "📧",
+                    name: "Email urgente",
+                    width: 55,
+                    height: 55
+                },
+                {
+                    emoji: "🐞",
+                    name: "Bug em produção",
+                    width: 55,
+                    height: 55
+                },
+                {
+                    emoji: "🔥",
+                    name: "Pedido urgente",
+                    width: 52,
+                    height: 60
+                },
+                {
+                    emoji: "📊",
+                    name: "Excel infinito",
+                    width: 60,
+                    height: 58
+                }
+            ];
 
-            obj.remove();
-            clearInterval(move);
+            const type = types[
+                Math.floor(Math.random() * types.length)
+            ];
+
+            obstacles.push({
+                x: canvas.width + 30,
+                y: groundY - type.height,
+                width: type.width,
+                height: type.height,
+                emoji: type.emoji,
+                name: type.name,
+                passed: false
+            });
         }
 
-    },20);
-}
+        function createCoffee() {
+            const heights = [groundY - 105, groundY - 175, groundY - 245];
 
-setInterval(spawn,1200);
+            coffees.push({
+                x: canvas.width + 30,
+                y: heights[Math.floor(Math.random() * heights.length)],
+                width: 45,
+                height: 45,
+                collected: false,
+                rotation: 0
+            });
+        }
 
-</script>
+        function createParticles(x, y, colour, amount) {
+            for (let i = 0; i < amount; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    velocityX: (Math.random() - 0.5) * 6,
+                    velocityY: -Math.random() * 6,
+                    size: 3 + Math.random() * 5,
+                    life: 35 + Math.random() * 20,
+                    colour: colour
+                });
+            }
+        }
 
+        function rectanglesTouch(a, b, margin = 8) {
+            return (
+                a.x + margin < b.x + b.width - margin &&
+                a.x + a.width - margin > b.x + margin &&
+                a.y + margin < b.y + b.height - margin &&
+                a.y + a.height - margin > b.y + margin
+            );
+        }
+
+        function hitObstacle(obstacle) {
+            if (invincibleTimer > 0) {
+                return;
+            }
+
+            lives -= 1;
+            invincibleTimer = 100;
+            shakeTimer = 18;
+
+            createParticles(
+                player.x + player.width / 2,
+                player.y + player.height / 2,
+                "#ff4d65",
+                24
+            );
+
+            messageText.textContent =
+                "💥 Foste atingida por: " + obstacle.name;
+
+            updateHud();
+
+            if (lives <= 0) {
+                endGame();
+            }
+        }
+
+        function collectCoffee(coffee) {
+            coffee.collected = true;
+            score += 25;
+
+            createParticles(
+                coffee.x + coffee.width / 2,
+                coffee.y + coffee.height / 2,
+                "#ffd84d",
+                18
+            );
+
+            messageText.textContent = "☕ Café apanhado: +25 pontos!";
+            updateHud();
+        }
+
+        function endGame() {
+            gameRunning = false;
+
+            if (score > highScore) {
+                highScore = Math.floor(score);
+                localStorage.setItem(
+                    "escapeMondayHighScore",
+                    highScore
+                );
+                highScoreText.textContent = highScore;
+                menuTitle.textContent = "👑 Novo recorde!";
+            } else {
+                menuTitle.textContent = "💥 Segunda-feira venceu!";
+            }
+
+            menuText.innerHTML =
+                "Pontuação final: <strong>" +
+                Math.floor(score) +
+                "</strong><br>Nível alcançado: <strong>" +
+                level +
+                "</strong>";
+
+            startButton.textContent = "🔄 Jogar novamente";
+            overlay.classList.remove("hidden");
+        }
+
+        function update(delta) {
+            const scale = delta / 16.67;
+
+            score += 0.08 * scale;
+
+            const newLevel = Math.floor(score / 100) + 1;
+
+            if (newLevel !== level) {
+                level = newLevel;
+                speed = Math.min(16, 7 + (level - 1) * 0.8);
+                messageText.textContent =
+                    "⚡ Nível " + level + ": o escritório acelerou!";
+            }
+
+            player.velocityY += player.gravity * scale;
+            player.y += player.velocityY * scale;
+
+            if (player.y >= groundY - player.height) {
+                player.y = groundY - player.height;
+                player.velocityY = 0;
+                player.onGround = true;
+            }
+
+            spawnTimer += delta;
+            coffeeTimer += delta;
+
+            const obstacleDelay = Math.max(
+                850,
+                1750 - level * 90
+            );
+
+            if (spawnTimer >= obstacleDelay) {
+                createObstacle();
+                spawnTimer = 0;
+            }
+
+            if (coffeeTimer >= 3000) {
+                createCoffee();
+                coffeeTimer = 0;
+            }
+
+            for (const cloud of clouds) {
+                cloud.x -= cloud.speed * scale;
+
+                if (cloud.x < -120) {
+                    cloud.x = canvas.width + Math.random() * 200;
+                }
+            }
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obstacle = obstacles[i];
+
+                obstacle.x -= speed * scale;
+
+                if (
+                    gameRunning &&
+                    rectanglesTouch(player, obstacle)
+                ) {
+                    hitObstacle(obstacle);
+                    obstacles.splice(i, 1);
+                    continue;
+                }
+
+                if (!obstacle.passed && obstacle.x + obstacle.width < player.x) {
+                    obstacle.passed = true;
+                    score += 5;
+                }
+
+                if (obstacle.x < -100) {
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            for (let i = coffees.length - 1; i >= 0; i--) {
+                const coffee = coffees[i];
+
+                coffee.x -= speed * scale;
+                coffee.rotation += 0.08 * scale;
+
+                if (
+                    !coffee.collected &&
+                    rectanglesTouch(player, coffee, 4)
+                ) {
+                    collectCoffee(coffee);
+                    coffees.splice(i, 1);
+                    continue;
+                }
+
+                if (coffee.x < -80) {
+                    coffees.splice(i, 1);
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+
+                particle.x += particle.velocityX * scale;
+                particle.y += particle.velocityY * scale;
+                particle.velocityY += 0.2 * scale;
+                particle.life -= scale;
+
+                if (particle.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            if (invincibleTimer > 0) {
+                invincibleTimer -= scale;
+            }
+
+            if (shakeTimer > 0) {
+                shakeTimer -= scale;
+            }
+
+            updateHud();
+        }
+
+        function drawBackground() {
+            const gradient = ctx.createLinearGradient(
+                0,
+                0,
+                0,
+                canvas.height
+            );
+
+            gradient.addColorStop(0, "#52c7ff");
+            gradient.addColorStop(0.65, "#dff7ff");
+            gradient.addColorStop(1, "#ffd77f");
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "rgba(255, 239, 115, 0.85)";
+            ctx.beginPath();
+            ctx.arc(930, 85, 42, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.font = "55px Arial";
+
+            for (const cloud of clouds) {
+                ctx.save();
+                ctx.globalAlpha = 0.85;
+                ctx.font = cloud.size + "px Arial";
+                ctx.fillText("☁️", cloud.x, cloud.y);
+                ctx.restore();
+            }
+
+            ctx.fillStyle = "rgba(61, 81, 125, 0.48)";
+
+            for (const building of skyline) {
+                ctx.fillRect(
+                    building.x,
+                    groundY - building.height,
+                    building.width,
+                    building.height
+                );
+
+                ctx.fillStyle = "rgba(255, 236, 133, 0.55)";
+
+                for (
+                    let windowY = groundY - building.height + 18;
+                    windowY < groundY - 15;
+                    windowY += 25
+                ) {
+                    ctx.fillRect(
+                        building.x + 12,
+                        windowY,
+                        9,
+                        11
+                    );
+
+                    ctx.fillRect(
+                        building.x + building.width - 21,
+                        windowY,
+                        9,
+                        11
+                    );
+                }
+
+                ctx.fillStyle = "rgba(61, 81, 125, 0.48)";
+            }
+
+            ctx.fillStyle = "#646c7b";
+            ctx.fillRect(0, groundY, canvas.width, 90);
+
+            ctx.fillStyle = "#f9cf45";
+
+            for (let x = 0; x < canvas.width; x += 120) {
+                ctx.fillRect(x, groundY + 42, 70, 6);
+            }
+
+            ctx.fillStyle = "#37404d";
+            ctx.fillRect(0, groundY, canvas.width, 8);
+        }
+
+        function drawPlayer() {
+            ctx.save();
+
+            if (invincibleTimer > 0) {
+                ctx.globalAlpha =
+                    Math.floor(invincibleTimer / 6) % 2 === 0
+                        ? 0.3
+                        : 1;
+            }
+
+            ctx.font = "64px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            if (!player.onGround) {
+                ctx.translate(
+                    player.x + player.width / 2,
+                    player.y + player.height / 2
+                );
+                ctx.rotate(-0.1);
+                ctx.fillText("🏃‍♀️", 0, 0);
+            } else {
+                const bounce =
+                    Math.sin(performance.now() / 100) * 2;
+
+                ctx.fillText(
+                    "🏃‍♀️",
+                    player.x + player.width / 2,
+                    player.y + player.height / 2 + bounce
+                );
+            }
+
+            ctx.restore();
+        }
+
+        function drawObjects() {
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            for (const obstacle of obstacles) {
+                ctx.font = obstacle.height + "px Arial";
+                ctx.fillText(
+                    obstacle.emoji,
+                    obstacle.x + obstacle.width / 2,
+                    obstacle.y + obstacle.height / 2
+                );
+            }
+
+            for (const coffee of coffees) {
+                ctx.save();
+                ctx.translate(
+                    coffee.x + coffee.width / 2,
+                    coffee.y + coffee.height / 2
+                );
+                ctx.rotate(Math.sin(coffee.rotation) * 0.15);
+                ctx.font = "45px Arial";
+                ctx.fillText("☕", 0, 0);
+                ctx.restore();
+            }
+
+            for (const particle of particles) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(
+                    0,
+                    particle.life / 50
+                );
+                ctx.fillStyle = particle.colour;
+                ctx.beginPath();
+                ctx.arc(
+                    particle.x,
+                    particle.y,
+                    particle.size,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function draw() {
+            ctx.save();
+
+            if (shakeTimer > 0) {
+                ctx.translate(
+                    (Math.random() - 0.5) * 12,
+                    (Math.random() - 0.5) * 8
+                );
+            }
+
+            drawBackground();
+            drawObjects();
+            drawPlayer();
+
+            ctx.restore();
+        }
+
+        function updateHud() {
+            scoreText.textContent = Math.floor(score);
+            livesText.textContent = lives;
+            levelText.textContent = level;
+            highScoreText.textContent = highScore;
+        }
+
+        function gameLoop(currentTime) {
+            if (!gameRunning) {
+                draw();
+                return;
+            }
+
+            const delta = Math.min(currentTime - lastTime, 35);
+            lastTime = currentTime;
+
+            update(delta);
+            draw();
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (
+                event.code === "Space" ||
+                event.code === "ArrowUp"
+            ) {
+                event.preventDefault();
+                jump();
+            }
+        });
+
+        canvas.addEventListener("pointerdown", jump);
+        mobileJump.addEventListener("pointerdown", jump);
+        startButton.addEventListener("click", startGame);
+
+        draw();
+    </script>
 </body>
 </html>
